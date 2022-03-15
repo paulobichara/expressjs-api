@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node ./bin/www",
     "lint": "eslint",
-    "test": "jest",
-    "coverage": "jest --coverage"
+    "test": "jest --runInBand",
+    "coverage": "jest --runInBand --coverage"
   },
   "dependencies": {
     "@prisma/client": "^3.10.0",

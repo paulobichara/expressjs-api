@@ -12,13 +12,11 @@ module.exports = [
     }),
   body('name')
     .if((value) => !!value)
-    .not()
     .isEmpty()
     .withMessage('Name must not be an empty string')
     .escape(),
   body('bio')
     .if((value) => !!value)
-    .not()
     .isEmpty()
     .withMessage('Bio must not be an empty string')
     .escape(),
