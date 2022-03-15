@@ -1,0 +1,9 @@
+{
+  "collectCoverageFrom": [
+    "**/*.{js,jsx}",
+    "!**/node_modules/**",
+    "!**/vendor/**",
+    "!**/__test__/**",
+    "!**/coverage/**"    
+  ]
+}
