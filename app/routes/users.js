@@ -1,16 +1,14 @@
-const express = require("express");
-const db = require("../connectors/database");
-const validatePost = require("../middlewares/validators/post");
-const validateUser = require("../middlewares/validators/user");
-const validateUserId = require("../middlewares/validators/user-id");
-const validator = require("../middlewares/validators/validator");
+const express = require('express');
+const db = require('../connectors/database');
+const validatePost = require('../middlewares/validators/post');
+const validateUser = require('../middlewares/validators/user');
+const validateUserId = require('../middlewares/validators/user-id');
+const validator = require('../middlewares/validators/validator');
 
 const router = express.Router();
-const BASE_URL = "/";
+const BASE_URL = '/';
 
-router.get(BASE_URL, async (_, res) => {
-  return res.json(await db.user.findMany());
-});
+router.get(BASE_URL, async (_, res) => res.json(await db.user.findMany()));
 
 router.post(BASE_URL, ...validateUser, ...validator, async (req, res) => {
   const newUser = await db.user.create({
@@ -25,7 +23,7 @@ router.post(BASE_URL, ...validateUser, ...validator, async (req, res) => {
 });
 
 router.get(
-  "/:userId/posts",
+  '/:userId/posts',
   ...validateUserId,
   ...validator,
   async (req, res) => {
@@ -33,11 +31,11 @@ router.get(
       where: { authorId: req.params.userId },
     });
     return res.json(posts);
-  }
+  },
 );
 
 router.post(
-  "/:userId/posts",
+  '/:userId/posts',
   ...validateUserId,
   ...validatePost,
   ...validator,
@@ -51,7 +49,7 @@ router.post(
       },
     });
     res.json(newPost);
-  }
+  },
 );
 
 module.exports = router;
