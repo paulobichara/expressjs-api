@@ -17,6 +17,8 @@ router.post(BASE_URL, ...validateUser, ...validator, async (req, res) => {
     data: {
       email: req.body.email,
       name: req.body.name,
+      bio: req.body.bio,
+      photo: req.body.photo,
     },
   });
   res.json(newUser);
