@@ -1,9 +1,10 @@
-describe('the index route', () => {
+describe('the users route', () => {
   const mockDb = {
     user: {
       findMany: jest.fn(),
       create: jest.fn(),
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
     },
     post: { findMany: jest.fn(), create: jest.fn() },
   };
@@ -105,6 +106,55 @@ describe('the index route', () => {
       it('must return a proper error', () => {
         expect(response.body).toEqual(USER);
       });
+    });
+  });
+
+  describe('when getting an user\'s posts', () => {
+    describe.each([[' ', 'is empty', 'User ID must be a number'], [123, 'does not exist', 'User not found']])('and the user ID is empty', (userId, _, msg) => {
+      let response;
+
+      beforeEach(async () => {
+        response = await request(app).get(`/users/${userId}/posts`).set('Accept', 'application/json')
+          .expect('Content-Type', /json/)
+          .expect(400);
+      });
+
+      it('must return a proper error', () => {
+        expect(response.body).toEqual({
+          errors: [
+            {
+              location: 'params',
+              msg,
+              param: 'userId',
+              value: userId,
+            },
+          ],
+        });
+      });
+    });
+
+    describe('and the user can be found', () => {
+      const USER = { id: 123 };
+      const POSTS = [{ id: 1 }, { id: 2 }, { id: 3 }];
+      let response;
+
+      beforeEach(async () => {
+        mockDb.user.findUnique.mockImplementation(async () => USER);
+        mockDb.post.findMany.mockImplementation(async () => POSTS);
+        response = await request(app).get(`/users/${USER.id}/posts`).set('Accept', 'application/json')
+          .expect('Content-Type', /json/)
+          .expect(200);
+      });
+
+      it('must return the user posts', () => {
+        expect(response.body).toEqual(POSTS);
+      });
+    });
+  });
+
+  describe('when creating a new user post', () => {
+    beforeEach(() => {
+
     });
   });
 });
