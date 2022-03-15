@@ -1,16 +1,19 @@
-var express = require("express");
-const { PrismaClient } = require("@prisma/client");
+const express = require("express");
+const db = require("../connectors/database");
+const validatePost = require("../middlewares/validators/post");
 const validateUser = require("../middlewares/validators/user");
+const validateUserId = require("../middlewares/validators/user-id");
+const validator = require("../middlewares/validators/validator");
 
-var router = express.Router();
-const prisma = new PrismaClient();
+const router = express.Router();
+const BASE_URL = "/";
 
-router.get("/", async (_, res) => {
-  return res.json(await prisma.user.findMany());
+router.get(BASE_URL, async (_, res) => {
+  return res.json(await db.user.findMany());
 });
 
-router.post("/", ...validateUser, async (req, res) => {
-  const newUser = await prisma.user.create({
+router.post(BASE_URL, ...validateUser, ...validator, async (req, res) => {
+  const newUser = await db.user.create({
     data: {
       email: req.body.email,
       name: req.body.name,
@@ -19,20 +22,34 @@ router.post("/", ...validateUser, async (req, res) => {
   res.json(newUser);
 });
 
-router.get("/:userId/posts/", async (_, res) => {
-  return res.json(await prisma.post.findMany());
-});
+router.get(
+  "/:userId/posts",
+  ...validateUserId,
+  ...validator,
+  async (req, res) => {
+    const posts = await db.post.findMany({
+      where: { authorId: req.params.userId },
+    });
+    return res.json(posts);
+  }
+);
 
-router.post("/:userId/posts/", async (req, res) => {
-  const newPost = await prisma.post.create({
-    data: {
-      title: req.body.title,
-      content: req.body.content,
-      published: req.body.published,
-      authorId: Number.parseInt(req.params.userId, 10),
-    },
-  });
-  res.json(newPost);
-});
+router.post(
+  "/:userId/posts",
+  ...validateUserId,
+  ...validatePost,
+  ...validator,
+  async (req, res) => {
+    const newPost = await db.post.create({
+      data: {
+        title: req.body.title,
+        content: req.body.content,
+        published: req.body.published,
+        authorId: req.params.userId,
+      },
+    });
+    res.json(newPost);
+  }
+);
 
 module.exports = router;
