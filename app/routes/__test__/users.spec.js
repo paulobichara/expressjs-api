@@ -1,20 +1,12 @@
 describe('the users route', () => {
-  const mockDb = {
-    user: {
-      findMany: jest.fn(),
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-    },
-    post: { findMany: jest.fn(), create: jest.fn() },
-  };
-
+  let mockDb;
   let request;
   let app;
 
   beforeEach(() => {
     jest.resetAllMocks();
-    jest.mock('../../connectors/database', () => mockDb);
+    jest.mock('../../connectors/database');
+    mockDb = require('../../connectors/database');
     request = require('supertest');
     app = require('../../app');
   });
@@ -39,8 +31,6 @@ describe('the users route', () => {
       ['email', null, { email: null }, 'E-mail is not valid'],
       ['email', undefined, { }, 'E-mail is not valid'],
       ['email', 'aaaaa', { email: 'aaaaa' }, 'E-mail is not valid'],
-      ['name', ' ', { email: 'aa@ba.com', name: ' ' }, 'Name must not be an empty string'],
-      ['bio', ' ', { email: 'aa@ba.com', bio: ' ' }, 'Bio must not be an empty string'],
       ['photo', 'http-invalid-url', { email: 'aa@ba.com', photo: 'http-invalid-url' }, 'Photo must be a URL'],
     ])('and the user %s is %s', (attribute, value, args, msg) => {
       let response;
@@ -66,14 +56,18 @@ describe('the users route', () => {
     });
 
     describe('and the user email is already in use', () => {
-      const USER = { id: 123 };
+      const USER = { id: 123, email: 'user@domain.com' };
       let response;
 
       beforeEach(async () => {
         mockDb.user.findFirst.mockImplementation(async () => USER);
-        response = await request(app).post('/users/').send({ email: 'john@domain.com' }).set('Accept', 'application/json')
+        response = await request(app).post('/users/').send({ email: USER.email }).set('Accept', 'application/json')
           .expect('Content-Type', /json/)
           .expect(400);
+      });
+
+      it('must properly check in the database', () => {
+        expect(mockDb.user.findFirst).toHaveBeenCalledWith({ where: { email: USER.email } });
       });
 
       it('must return a proper error', () => {
@@ -83,7 +77,7 @@ describe('the users route', () => {
               location: 'body',
               msg: 'E-mail is already in use',
               param: 'email',
-              value: 'john@domain.com',
+              value: USER.email,
             },
           ],
         });
@@ -91,7 +85,9 @@ describe('the users route', () => {
     });
 
     describe('and the user email is valid and not in use', () => {
-      const REQUEST_BODY = { email: 'john@domain.com' };
+      const REQUEST_BODY = {
+        email: 'john@domain.com', name: 'John Doe', bio: 'Meh', photo: 'https://www.iconspng.com/clipart/happy-penguin-avatar/happy-penguin-avatar.svg',
+      };
       const USER = { id: 123, ...REQUEST_BODY };
 
       let response;
@@ -103,58 +99,13 @@ describe('the users route', () => {
           .expect(200);
       });
 
-      it('must return a proper error', () => {
+      it('must properly create the user', () => {
+        expect(mockDb.user.create).toHaveBeenCalledWith({ data: REQUEST_BODY });
+      });
+
+      it('must return the new user', () => {
         expect(response.body).toEqual(USER);
       });
-    });
-  });
-
-  describe('when getting an user\'s posts', () => {
-    describe.each([[' ', 'is empty', 'User ID must be a number'], [123, 'does not exist', 'User not found']])('and the user ID is empty', (userId, _, msg) => {
-      let response;
-
-      beforeEach(async () => {
-        response = await request(app).get(`/users/${userId}/posts`).set('Accept', 'application/json')
-          .expect('Content-Type', /json/)
-          .expect(400);
-      });
-
-      it('must return a proper error', () => {
-        expect(response.body).toEqual({
-          errors: [
-            {
-              location: 'params',
-              msg,
-              param: 'userId',
-              value: userId,
-            },
-          ],
-        });
-      });
-    });
-
-    describe('and the user can be found', () => {
-      const USER = { id: 123 };
-      const POSTS = [{ id: 1 }, { id: 2 }, { id: 3 }];
-      let response;
-
-      beforeEach(async () => {
-        mockDb.user.findUnique.mockImplementation(async () => USER);
-        mockDb.post.findMany.mockImplementation(async () => POSTS);
-        response = await request(app).get(`/users/${USER.id}/posts`).set('Accept', 'application/json')
-          .expect('Content-Type', /json/)
-          .expect(200);
-      });
-
-      it('must return the user posts', () => {
-        expect(response.body).toEqual(POSTS);
-      });
-    });
-  });
-
-  describe('when creating a new user post', () => {
-    beforeEach(() => {
-
     });
   });
 });

@@ -1,8 +1,6 @@
 const express = require('express');
 const db = require('../connectors/database');
-const validatePost = require('../middlewares/validators/post');
 const validateUser = require('../middlewares/validators/user');
-const validateUserId = require('../middlewares/validators/user-id');
 const validator = require('../middlewares/validators/validator');
 
 const router = express.Router();
@@ -21,35 +19,5 @@ router.post(BASE_URL, ...validateUser, ...validator, async (req, res) => {
   });
   res.json(newUser);
 });
-
-router.get(
-  '/:userId/posts',
-  ...validateUserId,
-  ...validator,
-  async (req, res) => {
-    const posts = await db.post.findMany({
-      where: { authorId: req.params.userId },
-    });
-    return res.json(posts);
-  },
-);
-
-router.post(
-  '/:userId/posts',
-  ...validateUserId,
-  ...validatePost,
-  ...validator,
-  async (req, res) => {
-    const newPost = await db.post.create({
-      data: {
-        title: req.body.title,
-        content: req.body.content,
-        published: req.body.published,
-        authorId: req.params.userId,
-      },
-    });
-    res.json(newPost);
-  },
-);
 
 module.exports = router;

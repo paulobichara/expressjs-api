@@ -1,8 +1,8 @@
-const { param } = require('express-validator');
+const { query } = require('express-validator');
 const db = require('../../connectors/database');
 
 module.exports = [
-  param('userId')
+  query('userId')
     .isNumeric()
     .withMessage('User ID must be a number')
     .bail()
