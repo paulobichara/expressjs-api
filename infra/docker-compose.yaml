@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:14.2
+    container_name: postgres
+    volumes:
+      - ./postgres/init-db.sql:/docker-entrypoint-initdb.d/create-dbs-and-users.sql
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=password
+      - TZ=UTC
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    volumes:
+      - ./pgadmin4/servers.json:/pgadmin4/servers.json
+    ports:
+      - "80:80"
+    depends_on:
+      - "postgres"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@domain.com
+      PGADMIN_DEFAULT_PASSWORD: password
